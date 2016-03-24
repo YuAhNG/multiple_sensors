@@ -50,7 +50,8 @@ void loop()
   float humd = myHumidity.readHumidity();
   float temp = myHumidity.readTemperature();
   int Ammonia = analogRead(Sensor_Ammonia);
-  int Noise= analogRead(Sensor_Noise);
+  //int Noise= analogRead(Sensor_Noise);
+  int data_noise[10000];
   status = pressure.startTemperature();
   
   if (status != 0)
@@ -106,12 +107,21 @@ void loop()
   }
   else;// Serial.println("error starting temperature measurement\n");
   
+  int noise_max = 0;
+  int noise_min = 1024;
+  int i;
+  for(i=0;i<10000;i++){
+    data_noise[i] = analogRead(Sensor_Noise);
+    noise_max = max(noise_max,data_noise[i]);
+    noise_min = min(noise_min,data_noise[i]);
+  }
+  int noise_amp = noise_max - noise_min;
   data_msg.humidity= humd;
   data_msg.temperature= temp;
   data_msg.smoke=Ammonia;
   data_msg.illumination=lux;
   data_msg.human=0;
-  data_msg.noise= Noise;
+  data_msg.noise= noise_amp/10+40;
   chatter.publish( &data_msg );
   nh.spinOnce();
   
