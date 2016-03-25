@@ -123,17 +123,6 @@ void loop()
   int i;
   for(i=0;i<100;i++){
     myStats.add(analogRead(Sensor_Noise));
-  
-    Serial.print("  Count: ");
-    Serial.print(myStats.count()); 
-  
-    Serial.print("  Average: ");
-    Serial.print(myStats.average(), 4);
-  
-    Serial.print("  Std deviation: ");
-  
-    Serial.print(myStats.pop_stdev(), 4);
-    Serial.println();
   }
   int noise_stdev = myStats.pop_stdev()*100;
   
