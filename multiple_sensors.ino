@@ -13,6 +13,7 @@ Date: 20160321
 #include <Wire.h>
 #include <ros.h>
 #include <dependant_api/all_sensor.h>
+#include "Statistic.h"
 
 #include "SFE_BMP180.h"
 #include "HTU21D.h"
@@ -26,6 +27,8 @@ ros::Publisher chatter("/robot/env_sensor", &data_msg);
 ros::NodeHandle  nh;
 
 //Create an instance of the object
+Statistic myStats; 
+
 HTU21D myHumidity;
 SFE_BMP180 pressure;
 BH1750 lightMeter;
@@ -36,6 +39,7 @@ void setup()
   nh.initNode();
   nh.advertise(chatter);
   
+  myStats.clear();
   pinMode(Sensor_Ammonia,INPUT);
   myHumidity.begin();
   pressure.begin();
@@ -51,7 +55,7 @@ void loop()
   float temp = myHumidity.readTemperature();
   int Ammonia = analogRead(Sensor_Ammonia);
   //int Noise= analogRead(Sensor_Noise);
-  int data_noise[10000];
+  //int data_noise[1000];
   status = pressure.startTemperature();
   
   if (status != 0)
@@ -107,21 +111,40 @@ void loop()
   }
   else;// Serial.println("error starting temperature measurement\n");
   
-  int noise_max = 0;
-  int noise_min = 1024;
+//  int noise_max = 0;
+//  int noise_min = 1024;
+//  int i;
+//  for(i=0;i<1000;i++){
+//    data_noise[i] = analogRead(Sensor_Noise);
+//    noise_max = max(noise_max,data_noise[i]);
+//    noise_min = min(noise_min,data_noise[i]);
+//  }
+  myStats.clear();
   int i;
-  for(i=0;i<10000;i++){
-    data_noise[i] = analogRead(Sensor_Noise);
-    noise_max = max(noise_max,data_noise[i]);
-    noise_min = min(noise_min,data_noise[i]);
+  for(i=0;i<100;i++){
+    myStats.add(analogRead(Sensor_Noise));
+  
+    Serial.print("  Count: ");
+    Serial.print(myStats.count()); 
+  
+    Serial.print("  Average: ");
+    Serial.print(myStats.average(), 4);
+  
+    Serial.print("  Std deviation: ");
+  
+    Serial.print(myStats.pop_stdev(), 4);
+    Serial.println();
   }
-  int noise_amp = noise_max - noise_min;
+  int noise_stdev = myStats.pop_stdev()*100;
+  
+  
+//  int noise_amp = noise_max - noise_min;
   data_msg.humidity= humd;
   data_msg.temperature= temp;
   data_msg.smoke=Ammonia;
   data_msg.illumination=lux;
   data_msg.human=0;
-  data_msg.noise= noise_amp/10+40;
+  data_msg.noise= noise_stdev;
   chatter.publish( &data_msg );
   nh.spinOnce();
   
