@@ -124,7 +124,7 @@ void loop()
   for(i=0;i<100;i++){
     myStats.add(analogRead(Sensor_Noise));
   }
-  int noise_stdev = myStats.pop_stdev()*100;
+  int noise_level = 50*log10(myStats.pop_stdev())+60;
   
   
 //  int noise_amp = noise_max - noise_min;
@@ -133,7 +133,7 @@ void loop()
   data_msg.smoke=Ammonia;
   data_msg.illumination=lux;
   data_msg.human=0;
-  data_msg.noise= noise_stdev;
+  data_msg.noise= noise_level;
   chatter.publish( &data_msg );
   nh.spinOnce();
   
